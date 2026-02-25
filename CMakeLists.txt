@@ -12,11 +12,22 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
+# Allow selecting libc specs (default: newlib-nano + nosys)
+set(LIBC_SPECS "--specs=nano.specs --specs=nosys.specs" CACHE STRING "Libc specs passed to compiler/linker (space-separated)")
+string(REPLACE " " ";" LIBC_SPECS_LIST "${LIBC_SPECS}")
+
+
+# LTO flags can require linker plugins; avoid enabling them for freestanding
+# builds (when no libc specs are provided).
+if(NOT LIBC_SPECS STREQUAL "")
+	add_compile_options(
+		$<$<CONFIG:Release>:-flto>
+		$<$<CONFIG:Release>:-fno-fat-lto-objects>
+	)
+endif()
+
 add_compile_options(
-	$<$<CONFIG:Release>:-flto>
-	$<$<CONFIG:Release>:-fno-fat-lto-objects>
-	--specs=nano.specs
-	--specs=nosys.specs
+	${LIBC_SPECS_LIST}
 	-O3
 	-Wall
 	-Werror
@@ -38,8 +49,7 @@ set(CPUFLAGS_F4 -mcpu=cortex-m4)
 set(CPUFLAGS_G0 -mcpu=cortex-m0)
 
 add_link_options(
-	--specs=nano.specs
-	--specs=nosys.specs
+	${LIBC_SPECS_LIST}
 	-Wall
 	-Wextra
 	-g3
@@ -47,6 +57,13 @@ add_link_options(
 	LINKER:--gc-sections
 	LINKER:--print-memory-usage
 )
+
+# If no libc specs are provided, avoid pulling in startup files and the
+# standard C library during link so we can build freestanding without
+# external libc/CRT startup objects.
+if(LIBC_SPECS STREQUAL "")
+    add_link_options(-nostdlib -nostartfiles)
+endif()
 
 add_subdirectory(libs/STM32_HAL)
 add_subdirectory(libs/STM32_USB_Device_Library)
@@ -83,6 +100,8 @@ set(
 	include/led.h src/led.c
 	include/timer.h src/timer.c
 	include/util.h src/util.c
+	include/stdlib.h src/libc_min.c
+    src/runtime_stubs.c
 
 	src/startup.c
 	src/main.c
