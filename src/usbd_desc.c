@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <string.h>
 
 #include "config.h"
+#include "usb_mode.h"
 #include "usbd_ctlreq.h"
 #include "usbd_desc.h"
 #include "util.h"
@@ -89,6 +90,13 @@ uint8_t *USBD_FS_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 	UNUSED(speed);
 	*length = sizeof(USBD_FS_DeviceDesc);
 	memcpy(USBD_DescBuf, USBD_FS_DeviceDesc, sizeof(USBD_FS_DeviceDesc));
+
+	/* For CDC-ACM composite devices, macOS expects IAD + device class 0xEF/0x02/0x01. */
+	if (usb_app_mode_is_uart()) {
+		USBD_DescBuf[4] = 0xEF; /* bDeviceClass: Miscellaneous */
+		USBD_DescBuf[5] = 0x02; /* bDeviceSubClass: Common Class */
+		USBD_DescBuf[6] = 0x01; /* bDeviceProtocol: Interface Association Descriptor */
+	}
 	return USBD_DescBuf;
 }
 
@@ -103,7 +111,15 @@ uint8_t *USBD_FS_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 uint8_t *USBD_FS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
 	UNUSED(speed);
-	USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_FS, USBD_DescBuf, length);
+	const char *product = USBD_PRODUCT_STRING_FS;
+
+#if defined(USBD_PRODUCT_STRING_UART_FS)
+	if (usb_app_mode_is_uart()) {
+		product = USBD_PRODUCT_STRING_UART_FS;
+	}
+#endif
+
+	USBD_GetString((uint8_t *)product, USBD_DescBuf, length);
 	return USBD_DescBuf;
 }
 

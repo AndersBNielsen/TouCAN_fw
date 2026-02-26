@@ -29,6 +29,8 @@ THE SOFTWARE.
 #include "usbd_core.h"
 #include "usbd_ctlreq.h"
 #include "usbd_def.h"
+#include "usb_mode.h"
+#include "usbd_cdc_uart.h"
 #include "usbd_gs_can.h"
 
 PCD_HandleTypeDef hpcd_USB_FS;
@@ -79,13 +81,22 @@ void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
 	USBD_ParseSetupRequest((USBD_SetupReqTypedef*)&pdev->request, (uint8_t*)hpcd->Setup);
 
 	bool request_was_handled = false;
+	const bool uart_mode = usb_app_mode_is_uart();
 
 	if ((pdev->request.bmRequest & 0x1F) == USB_REQ_RECIPIENT_DEVICE ) { // device request
-		request_was_handled = USBD_GS_CAN_CustomDeviceRequest(pdev, &pdev->request);
+		if (uart_mode) {
+			request_was_handled = USBD_CDC_UART_CustomDeviceRequest(pdev, &pdev->request);
+		} else {
+			request_was_handled = USBD_GS_CAN_CustomDeviceRequest(pdev, &pdev->request);
+		}
 	}
 
 	if ((pdev->request.bmRequest & 0x1F) == USB_REQ_RECIPIENT_INTERFACE ) { // interface request
-		request_was_handled = USBD_GS_CAN_CustomInterfaceRequest(pdev, &pdev->request);
+		if (uart_mode) {
+			request_was_handled = USBD_CDC_UART_CustomInterfaceRequest(pdev, &pdev->request);
+		} else {
+			request_was_handled = USBD_GS_CAN_CustomInterfaceRequest(pdev, &pdev->request);
+		}
 	}
 
 	if (!request_was_handled) {
@@ -116,14 +127,22 @@ void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
 
 void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
 {
-	USBD_GS_CAN_SuspendCallback((USBD_HandleTypeDef*)hpcd->pData);
+	if (usb_app_mode_is_uart()) {
+		USBD_CDC_UART_SuspendCallback((USBD_HandleTypeDef*)hpcd->pData);
+	} else {
+		USBD_GS_CAN_SuspendCallback((USBD_HandleTypeDef*)hpcd->pData);
+	}
 	USBD_LL_Suspend((USBD_HandleTypeDef*)hpcd->pData);
 }
 
 void HAL_PCD_ResumeCallback(PCD_HandleTypeDef *hpcd)
 {
 	USBD_LL_Resume((USBD_HandleTypeDef*) hpcd->pData);
-	USBD_GS_CAN_ResumeCallback((USBD_HandleTypeDef*)hpcd->pData);
+	if (usb_app_mode_is_uart()) {
+		USBD_CDC_UART_ResumeCallback((USBD_HandleTypeDef*)hpcd->pData);
+	} else {
+		USBD_GS_CAN_ResumeCallback((USBD_HandleTypeDef*)hpcd->pData);
+	}
 }
 
 USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
@@ -165,8 +184,24 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 #if defined(USB) || defined(USB_DRD_FS)
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x00, PCD_SNG_BUF, 0x18);
 	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x80, PCD_SNG_BUF, 0x58);
-	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x81, PCD_SNG_BUF, 0x98);
-	HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x02, PCD_DBL_BUF, 0x00D80158);
+
+	if (usb_app_mode_is_uart()) {
+		/* CDC-ACM endpoints:
+		 *  - 0x01 bulk OUT
+		 *  - 0x81 bulk IN
+		 *  - 0x82 interrupt IN
+		 */
+		HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x01, PCD_SNG_BUF, 0x98);
+		HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x81, PCD_SNG_BUF, 0xD8);
+		HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x82, PCD_SNG_BUF, 0x118);
+	} else {
+		/* CAN endpoints:
+		 *  - 0x81 bulk IN
+		 *  - 0x02 bulk OUT (double buffered)
+		 */
+		HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x81, PCD_SNG_BUF, 0x98);
+		HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData, 0x02, PCD_DBL_BUF, 0x00D80158);
+	}
 #elif defined(USB_OTG_FS)
 	HAL_PCDEx_SetRxFiFo((PCD_HandleTypeDef*)pdev->pData, USB_RX_FIFO_SIZE); // shared RX FIFO
 	HAL_PCDEx_SetTxFiFo((PCD_HandleTypeDef*)pdev->pData, 0U, 64U / 4U);     // 0x80, 64 bytes (div by 4 for words)

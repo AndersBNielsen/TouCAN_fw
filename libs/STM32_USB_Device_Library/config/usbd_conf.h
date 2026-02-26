@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 #include "hal_include.h"
 
-#define USBD_MAX_NUM_INTERFACES       1
+#define USBD_MAX_NUM_INTERFACES       2
 #define USBD_MAX_NUM_CONFIGURATION    1
 #define USBD_DESC_BUF_SIZE            192
 #define USBD_SUPPORT_USER_STRING_DESC 1
