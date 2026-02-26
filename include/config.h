@@ -172,6 +172,7 @@ THE SOFTWARE.
 
 #elif defined(BOARD_toucan)
 	#define USBD_PRODUCT_STRING_FS	 "TouCAN Probe gs_usb"
+	#define USBD_PRODUCT_STRING_UART_FS "TouCAN Probe USB-to-UART"
 	#define USBD_MANUFACTURER_STRING "TouCAN Probe"
 	#define DFU_INTERFACE_STRING_FS	 "TouCAN Probe firmware upgrade interface"
 
@@ -196,6 +197,10 @@ THE SOFTWARE.
 	#define LEDTX_Pin				 GPIO_PIN_13 /* red */
 	#define LEDTX_Mode				 GPIO_MODE_OUTPUT_PP
 	#define LEDTX_Active_High		 0
+
+	/* Startup mode select: active-high input. High at boot -> USB-to-UART mode. */
+	#define USB_UART_MODESEL_GPIO_Port GPIOB
+	#define USB_UART_MODESEL_Pin		 GPIO_PIN_14
 
 /*************** STM32F072 ***************/
 

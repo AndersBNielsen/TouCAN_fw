@@ -89,7 +89,11 @@ set(
 	include/gs_usb.h
 	include/usbd_desc.h src/usbd_desc.c
 	include/usbd_gs_can.h src/usbd_gs_can.c
+	include/usbd_cdc_uart.h src/usbd_cdc_uart.c
 	src/usbd_conf.c
+
+	include/usb_mode.h src/usb_mode.c
+	include/uart_bridge.h src/uart_bridge.c
 
 	include/board.h
 	include/can.h
@@ -298,6 +302,7 @@ set(TGTF042_LIST
 	"canalyze"
 	"cannette"
 	"cantact"
+	"toucan"
 	"usb2can"
 )
 set(TGTF072_LIST

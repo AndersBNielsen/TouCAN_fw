@@ -2,7 +2,7 @@
 /.idea/
 /.vscode/
 /Debug/
-/build/
+/build*/
 *.asmo
 *.bin
 *.d

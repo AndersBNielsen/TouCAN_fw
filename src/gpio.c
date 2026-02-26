@@ -157,5 +157,14 @@ void gpio_init(void)
 	HAL_GPIO_Init(USB_GPIO_Port, &GPIO_InitStruct);
 #endif
 
+#if defined(USB_UART_MODESEL_GPIO_Port) && defined(USB_UART_MODESEL_Pin)
+	GPIO_InitStruct.Pin = USB_UART_MODESEL_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Alternate = 0;
+	HAL_GPIO_Init(USB_UART_MODESEL_GPIO_Port, &GPIO_InitStruct);
+#endif
+
 	gpio_init_term();
 }

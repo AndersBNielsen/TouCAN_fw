@@ -57,6 +57,8 @@ void Default_Handler(void)
 	while (1);
 }
 
+void USART1_IRQHandler(void) __attribute__((weak, alias("Default_Handler")));
+
 extern void Reset_Handler(void);
 
 typedef void (*pFunc)(void);
@@ -109,7 +111,7 @@ const pFunc InterruptVectorTable[48] = {
 	0, // int 24: I2C2
 	0, // int 25: SPI1
 	0, // int 26: SPI2
-	0, // int 27: USART1
+	USART1_IRQHandler, // int 27: USART1
 	0, // int 28: USART2
 	0, // int 29: USART3_4
 	0, // int 30: CEC_CAN
@@ -173,7 +175,7 @@ const pFunc InterruptVectorTable[84] = {
 	0,                    // int 34: I2C2 Error
 	0,                    // int 35: SPI1
 	0,                    // int 36: SPI2
-	0,                    // int 36: USART1
+	USART1_IRQHandler,    // int 36: USART1
 	0,                    // int 37: USART2
 	0,                    // int 38: USART3
 	0,                    // int 39: External Line [15:10]s
@@ -253,7 +255,7 @@ const pFunc InterruptVectorTable[48] = {
 	0,                    /* I2C2, I2C3                   */
 	0,                    /* SPI1                         */
 	0,                    /* SPI2, SPI3                   */
-	0,                    /* USART1                       */
+	USART1_IRQHandler,    /* USART1                       */
 	0,                    /* USART2 & LPUART2             */
 	0,                    /* USART3, USART4, USART5, USART6, LPUART1   */
 	0,                    /* CEC                          */

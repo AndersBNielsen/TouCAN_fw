@@ -39,15 +39,35 @@ THE SOFTWARE.
 #include "hal_include.h"
 #include "led.h"
 #include "timer.h"
+#include "usb_mode.h"
 #include "usbd_conf.h"
 #include "usbd_core.h"
 #include "usbd_def.h"
 #include "usbd_desc.h"
+#include "usbd_cdc_uart.h"
 #include "usbd_gs_can.h"
 #include "util.h"
 
 static USBD_GS_CAN_HandleTypeDef hGS_CAN;
+static USBD_CDC_UART_HandleTypeDef hCDC_UART;
 static USBD_HandleTypeDef hUSB = {0};
+
+static led_data_t uart_leds;
+static led_data_t *uart_leds_ptr;
+
+void uart_bridge_on_rx_activity(void)
+{
+	if (uart_leds_ptr) {
+		led_indicate_trx(uart_leds_ptr, LED_RX);
+	}
+}
+
+void uart_bridge_on_tx_activity(void)
+{
+	if (uart_leds_ptr) {
+		led_indicate_trx(uart_leds_ptr, LED_TX);
+	}
+}
 
 void __weak _close(void) {
 }
@@ -65,6 +85,35 @@ int main(void)
 
 	gpio_init();
 	timer_init();
+	usb_app_mode_init_from_pins();
+
+	if (usb_app_mode_is_uart()) {
+		uart_leds_ptr = &uart_leds;
+		led_init(uart_leds_ptr,
+				 LEDRX_GPIO_Port, LEDRX_Pin, LEDRX_Active_High,
+				 LEDTX_GPIO_Port, LEDTX_Pin, LEDTX_Active_High);
+		led_set_mode(uart_leds_ptr, LED_MODE_NORMAL);
+
+		USBD_Init(&hUSB, (USBD_DescriptorsTypeDef*)&FS_Desc, DEVICE_FS);
+		USBD_RegisterClass(&hUSB, &USBD_CDC_UART);
+		USBD_CDC_UART_Init(&hCDC_UART, &hUSB);
+		USBD_Start(&hUSB);
+
+		/* nice wake-up pattern */
+		for (uint8_t j = 0; j < 10; j++) {
+			HAL_GPIO_TogglePin(LEDRX_GPIO_Port, LEDRX_Pin);
+			HAL_Delay(50);
+			HAL_GPIO_TogglePin(LEDTX_GPIO_Port, LEDTX_Pin);
+		}
+
+		while (1) {
+			USBD_CDC_UART_Task(&hCDC_UART);
+			led_update(uart_leds_ptr);
+			if (USBD_CDC_UART_DfuDetachRequested(&hUSB)) {
+				dfu_run_bootloader();
+			}
+		}
+	}
 
 	INIT_LIST_HEAD(&hGS_CAN.list_frame_pool);
 	INIT_LIST_HEAD(&hGS_CAN.list_to_host);
