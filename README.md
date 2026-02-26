@@ -1,3 +1,6 @@
+# TouCAN gs_usb firmware
+This is a fork of candleLight_fw with (upcoming) support for RS-485 and RS-422 with the TouCAN Probe board <https://github.com/AndersBNielsen/TouCAN>
+
 # candleLight_gsusb
 [![Build](https://github.com/candle-usb/candleLight_fw/actions/workflows/ci.yml/badge.svg)](https://github.com/candle-usb/candleLight_fw/actions)
 
