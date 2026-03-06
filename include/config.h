@@ -148,28 +148,6 @@ THE SOFTWARE.
 	#define LEDTX_Mode				 GPIO_MODE_OUTPUT_PP
 	#define LEDTX_Active_High		 1
 
-#elif defined(BOARD_usb2can)
-	#define USBD_PRODUCT_STRING_FS	 "USB2CAN RCA gs_usb"
-	#define USBD_MANUFACTURER_STRING "Roboter Club Aachen"
-	#define DFU_INTERFACE_STRING_FS	 "usb2can firmware upgrade interface"
-
-	#define TIM2_CLOCK_SPEED		 48000000
-
-	#define CAN_INTERFACE			 CAN
-	#define CAN_CLOCK_SPEED			 48000000
-	#define NUM_CAN_CHANNEL			 1
-	#define CONFIG_CAN_FILTER		 1
-
-	#define LEDTX_GPIO_Port			 GPIOA
-	#define LEDTX_Pin				 GPIO_PIN_1 /* blue */
-	#define LEDTX_Mode				 GPIO_MODE_OUTPUT_OD
-	#define LEDTX_Active_High		 0
-
-	#define LEDRX_GPIO_Port			 GPIOB
-	#define LEDRX_Pin				 GPIO_PIN_3 /* green */
-	#define LEDRX_Mode				 GPIO_MODE_OUTPUT_OD
-	#define LEDRX_Active_High		 0
-
 #elif defined(BOARD_toucan)
 	#define USBD_PRODUCT_STRING_FS	 "TouCAN Probe gs_usb"
 	#define USBD_MANUFACTURER_STRING "TouCAN Probe"
@@ -196,6 +174,28 @@ THE SOFTWARE.
 	#define LEDTX_Pin				 GPIO_PIN_13 /* red */
 	#define LEDTX_Mode				 GPIO_MODE_OUTPUT_PP
 	#define LEDTX_Active_High		 0
+
+#elif defined(BOARD_usb2can)
+	#define USBD_PRODUCT_STRING_FS	 "USB2CAN RCA gs_usb"
+	#define USBD_MANUFACTURER_STRING "Roboter Club Aachen"
+	#define DFU_INTERFACE_STRING_FS	 "usb2can firmware upgrade interface"
+
+	#define TIM2_CLOCK_SPEED		 48000000
+
+	#define CAN_INTERFACE			 CAN
+	#define CAN_CLOCK_SPEED			 48000000
+	#define NUM_CAN_CHANNEL			 1
+	#define CONFIG_CAN_FILTER		 1
+
+	#define LEDTX_GPIO_Port			 GPIOA
+	#define LEDTX_Pin				 GPIO_PIN_1 /* blue */
+	#define LEDTX_Mode				 GPIO_MODE_OUTPUT_OD
+	#define LEDTX_Active_High		 0
+
+	#define LEDRX_GPIO_Port			 GPIOB
+	#define LEDRX_Pin				 GPIO_PIN_3 /* green */
+	#define LEDRX_Mode				 GPIO_MODE_OUTPUT_OD
+	#define LEDRX_Active_High		 0
 
 /*************** STM32F072 ***************/
 
