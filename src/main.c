@@ -47,6 +47,7 @@ THE SOFTWARE.
 #include "usbd_cdc_uart.h"
 #include "usbd_gs_can.h"
 #include "util.h"
+#include "ws2812.h"
 
 static USBD_GS_CAN_HandleTypeDef hGS_CAN;
 static USBD_CDC_UART_HandleTypeDef hCDC_UART;
@@ -85,6 +86,7 @@ int main(void)
 
 	gpio_init();
 	timer_init();
+	ws2812_startup_rainbow();
 	usb_app_mode_init_from_pins();
 
 	if (usb_app_mode_is_uart()) {

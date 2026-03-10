@@ -12,8 +12,12 @@ typedef struct _copy_table_t
 extern const copy_table_t __copy_table_start__;
 extern const copy_table_t __copy_table_end__;
 
+extern uint32_t __bss_start__;
+extern uint32_t __bss_end__;
+
 void __initialize_hardware_early(void);
-void _start(void) __attribute__((noreturn));
+int main(void);
+void _exit(int code);
 
 void Reset_Handler(void)
 {
@@ -23,7 +27,12 @@ void Reset_Handler(void)
 		memcpy(table->dest, table->src, table->wlen);
 	}
 
-	_start();
+	for (uint32_t *p = &__bss_start__; p < &__bss_end__; ++p) {
+		*p = 0;
+	}
+
+	(void)main();
+	_exit(0);
 }
 
 void __register_exitproc(void) {

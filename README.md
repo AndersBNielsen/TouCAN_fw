@@ -57,6 +57,68 @@ The Firmware also implements WCID USB descriptors and thus can be used on recent
 
 Building requires arm-none-eabi-gcc toolchain.
 
+### macOS (Arm GNU Toolchain)
+
+This repo includes a CMake toolchain file for Arm GNU Toolchain 15.2 rel1:
+`cmake/arm-gnu-toolchain-15.2rel1.cmake`.
+
+#### Install the toolchain
+
+Option A (Arm official installer, recommended for matching CI/toolchain versions):
+
+- Download and install **Arm GNU Toolchain** from Arm (the installer typically places it under
+  `/Applications/ArmGNUToolchain/<version>/arm-none-eabi/bin`).
+- Verify:
+
+```sh
+/Applications/ArmGNUToolchain/15.2.rel1/arm-none-eabi/bin/arm-none-eabi-gcc --version
+```
+
+Option B (Homebrew):
+
+- Package names can change over time. The usual workflow is:
+
+```sh
+brew search arm-none-eabi
+brew install arm-none-eabi-gcc
+```
+
+Also install build/flash tools:
+
+```sh
+brew install cmake dfu-util
+```
+
+#### Fresh build (clean build directory)
+
+From the repo root:
+
+```sh
+rm -rf build-toucan-armgnu-fresh
+
+cmake -S . -B build-toucan-armgnu-fresh \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gnu-toolchain-15.2rel1.cmake
+
+# Build one target
+cmake --build build-toucan-armgnu-fresh --target toucan_fw -- -j8
+
+# Or build everything
+# cmake --build build-toucan-armgnu-fresh -- -j8
+```
+
+If your Arm toolchain is not under `/Applications/ArmGNUToolchain/...`, pass the bin dir explicitly:
+
+```sh
+cmake -S . -B build-toucan-armgnu-fresh \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gnu-toolchain-15.2rel1.cmake \
+  -DARM_GNU_TOOLCHAIN_BIN_DIR=/path/to/arm-none-eabi/bin
+```
+
+Notes:
+
+- LTO is intentionally **opt-in** in this fork: add `-DENABLE_LTO=ON` at configure time if you want it.
+- The build produces both `.bin` and `.dfu` artifacts (in the build directory).
+
 ```shell
 sudo apt-get install gcc-arm-none-eabi
 
@@ -80,6 +142,21 @@ make cantact_fw
 # to list possible targets :
 make help
 
+```
+
+### macOS flashing quick commands (ROM DFU)
+
+If the device is in STM32 ROM DFU mode (`0483:df11`):
+
+```sh
+dfu-util -l
+dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D build-toucan-armgnu-fresh/toucan_fw.bin
+```
+
+Or use the generated flash target:
+
+```sh
+cmake --build build-toucan-armgnu-fresh --target flash-toucan_fw
 ```
 
 ## Download Binaries

@@ -123,6 +123,17 @@ SECTIONS
 
   } > RAM
 
+  /* Data that must survive a software reset (e.g. DFU jump magic). */
+  .noinit (NOLOAD) :
+  {
+    . = ALIGN(4);
+    __noinit_start__ = .;
+    *(.noinit)
+    *(.noinit.*)
+    . = ALIGN(4);
+    __noinit_end__ = .;
+  } > RAM
+
   .bss :
   {
     . = ALIGN(4);

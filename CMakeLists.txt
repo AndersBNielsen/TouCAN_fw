@@ -17,12 +17,16 @@ set(LIBC_SPECS "--specs=nano.specs --specs=nosys.specs" CACHE STRING "Libc specs
 string(REPLACE " " ";" LIBC_SPECS_LIST "${LIBC_SPECS}")
 
 
-# LTO flags can require linker plugins; avoid enabling them for freestanding
-# builds (when no libc specs are provided).
-if(NOT LIBC_SPECS STREQUAL "")
+# LTO can trigger hard-to-debug link issues on embedded toolchains.
+# Keep it opt-in.
+option(ENABLE_LTO "Enable link-time optimization (-flto)" OFF)
+if(ENABLE_LTO AND NOT LIBC_SPECS STREQUAL "")
 	add_compile_options(
 		$<$<CONFIG:Release>:-flto>
 		$<$<CONFIG:Release>:-fno-fat-lto-objects>
+	)
+	add_link_options(
+		$<$<CONFIG:Release>:-flto>
 	)
 endif()
 
@@ -62,7 +66,7 @@ add_link_options(
 # standard C library during link so we can build freestanding without
 # external libc/CRT startup objects.
 if(LIBC_SPECS STREQUAL "")
-    add_link_options(-nostdlib -nostartfiles)
+	add_link_options(-nostdlib -nostartfiles)
 endif()
 
 add_subdirectory(libs/STM32_HAL)
@@ -94,6 +98,7 @@ set(
 
 	include/usb_mode.h src/usb_mode.c
 	include/uart_bridge.h src/uart_bridge.c
+	include/ws2812.h src/ws2812.c
 
 	include/board.h
 	include/can.h
@@ -105,7 +110,6 @@ set(
 	include/timer.h src/timer.c
 	include/util.h src/util.c
 	include/stdlib.h src/libc_min.c
-    src/runtime_stubs.c
 
 	src/startup.c
 	src/main.c

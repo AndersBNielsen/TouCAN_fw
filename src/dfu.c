@@ -25,6 +25,7 @@ THE SOFTWARE.
 */
 
 #include "dfu.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include "hal_include.h"
 
@@ -34,20 +35,34 @@ THE SOFTWARE.
 #define SYSMEM_STM32F072			   0x1FFFC800
 #define SYSMEM_STM32G0B1			   0x1FFF0000
 
-static uint32_t dfu_reset_to_bootloader_magic;
+typedef struct {
+	uint32_t magic;
+	uint32_t magic_inv;
+} dfu_reset_magic_t;
+
+static volatile dfu_reset_magic_t dfu_reset_magic __attribute__((section(".noinit")));
 
 static void dfu_hack_boot_pin_f042(void);
 static void dfu_jump_to_bootloader(uint32_t sysmem_base);
 
 void dfu_run_bootloader(void)
 {
-	dfu_reset_to_bootloader_magic = RESET_TO_BOOTLOADER_MAGIC_CODE;
+	dfu_reset_magic.magic = RESET_TO_BOOTLOADER_MAGIC_CODE;
+	dfu_reset_magic.magic_inv = ~RESET_TO_BOOTLOADER_MAGIC_CODE;
 	NVIC_SystemReset();
 }
 
 void __initialize_hardware_early(void)
 {
-	if (dfu_reset_to_bootloader_magic == RESET_TO_BOOTLOADER_MAGIC_CODE)
+	bool do_bootloader = (dfu_reset_magic.magic == RESET_TO_BOOTLOADER_MAGIC_CODE) &&
+						 (dfu_reset_magic.magic_inv == ~RESET_TO_BOOTLOADER_MAGIC_CODE);
+
+	/* Clear the magic early so bootloader entry is one-shot and so random RAM
+	 * contents at power-up can't accidentally match and trap us in DFU. */
+	dfu_reset_magic.magic = 0;
+	dfu_reset_magic.magic_inv = 0;
+
+	if (do_bootloader)
 	{
 		switch (HAL_GetDEVID())
 		{

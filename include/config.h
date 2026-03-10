@@ -202,6 +202,12 @@ THE SOFTWARE.
 	#define USB_UART_MODESEL_GPIO_Port GPIOB
 	#define USB_UART_MODESEL_Pin		 GPIO_PIN_14
 
+	/* Debug: WS2812B LED strip on PA0 */
+	#define CONFIG_WS2812_STARTUP		 1
+	#define WS2812_GPIO_Port			 GPIOA
+	#define WS2812_Pin				 GPIO_PIN_0
+	#define WS2812_LED_COUNT			 30
+
 /*************** STM32F072 ***************/
 
 #elif defined(BOARD_CANable_MKS)
