@@ -1,6 +1,6 @@
 # Protocol WaveDrom Examples
 
-This file collects small WaveDrom examples for the serial and fieldbus signals that are relevant to TouCAN and this fork.
+This file collects small WaveDrom examples for the serial and fieldbus signals that are relevant to FalCAN and this fork.
 
 These diagrams are intentionally simplified:
 - UART is shown as logic-level framing.
@@ -10,15 +10,22 @@ These diagrams are intentionally simplified:
 
 If your Markdown preview does not render WaveDrom directly, copy the fenced `wavedrom` blocks into a WaveDrom renderer.
 
+The examples below use valid WaveDrom wave characters from the official tutorial:
+- `0` and `1` for digital low and high
+- `h` and `l` for high and low levels
+- `z` for high impedance
+- `=` and `2..9` for labeled bus states
+- `.` to extend the previous state
+
 ## UART
 
 Example: 8N1 UART sending `0x55` (`01010101` on the wire, LSB first).
 
 ```wavedrom
 { signal: [
-  { name: 'UART TX', wave: '10=.=.=.=.=.=.=.1', data: ['Start', 'b0=1', 'b1=0', 'b2=1', 'b3=0', 'b4=1', 'b5=0', 'b6=1', 'b7=0'] },
-  { name: 'Meaning', wave: 'x.=.=.=.=.=.=.=.x', data: ['Idle', 'LSB first', '', '', '', '', '', '', 'Stop'] }
-] }
+  { name: 'Fields',  wave: '23456789234', data: ['Idle', 'Start', 'b0=1', 'b1=0', 'b2=1', 'b3=0', 'b4=1', 'b5=0', 'b6=1', 'b7=0', 'Stop'] },
+  { name: 'Level',   wave: '10101010101' }
+], config: { hscale: 2 } }
 ```
 
 Notes:
@@ -37,13 +44,16 @@ Common convention:
 
 ```wavedrom
 { signal: [
-  { name: 'UART bits',      wave: '10=.=.=.=.=.=.=.1', data: ['Start', 'b0=1', 'b1=0', 'b2=1', 'b3=0', 'b4=1', 'b5=0', 'b6=1', 'b7=0'] },
-  { name: 'RS-232 line',    wave: '01=.=.=.=.=.=.=.0', data: ['+V', '-V', '+V', '-V', '+V', '-V', '+V', '-V', '+V'] },
-  { name: 'Interpretation', wave: 'x.=.=.=.=.=.=.=.x', data: ['Idle = -V', 'Start = +V', '', '', '', '', '', '', 'Stop = -V'] }
-] }
+  { name: 'Fields',      wave: '23456789234', data: ['Idle', 'Start', 'b0=1', 'b1=0', 'b2=1', 'b3=0', 'b4=1', 'b5=0', 'b6=1', 'b7=0', 'Stop'] },
+  { name: 'UART logic',  wave: '10101010101' },
+  { name: 'RS-232 line', wave: '01010101010' },
+  { name: 'Voltage',     wave: 'lhlhlhlhlhl' }
+], config: { hscale: 2 } }
 ```
 
 Typical voltage ranges are around `+3 V` to `+15 V` and `-3 V` to `-15 V`, depending on the transceiver.
+
+In this simplified view, `Voltage` is only showing low versus high line state. For RS-232, low corresponds to negative voltage and high corresponds to positive voltage.
 
 ## RS-422
 
@@ -53,11 +63,11 @@ Signal naming varies by vendor. Some datasheets label the non-inverting line `A`
 
 ```wavedrom
 { signal: [
-  { name: 'UART bits', wave: '10=.=.=.=.=.=.=.1', data: ['Start', 'b0=1', 'b1=0', 'b2=1', 'b3=0', 'b4=1', 'b5=0', 'b6=1', 'b7=0'] },
-  { name: 'Line +',    wave: '10=.=.=.=.=.=.=.1' },
-  { name: 'Line -',    wave: '01=.=.=.=.=.=.=.0' },
-  { name: 'Diff',      wave: '10=.=.=.=.=.=.=.1', data: ['Negative', 'Positive', 'Negative', 'Positive', 'Negative', 'Positive', 'Negative', 'Positive', 'Negative'] }
-] }
+  { name: 'Fields', wave: '23456789234', data: ['Idle', 'Start', 'b0=1', 'b1=0', 'b2=1', 'b3=0', 'b4=1', 'b5=0', 'b6=1', 'b7=0', 'Stop'] },
+  { name: 'Line +', wave: '10101010101' },
+  { name: 'Line -', wave: '01010101010' },
+  { name: 'Diff',   wave: '10101010101' }
+], config: { hscale: 2 } }
 ```
 
 The receiver decides from the voltage difference between the two wires, which improves noise immunity.
@@ -70,15 +80,16 @@ Example below:
 - `DE` goes high before transmission.
 - `TXD` is the local UART data stream.
 - The bus pair carries the differential version while the driver is enabled.
+- Turnaround timing is simplified here so the diagram stays compact.
 
 ```wavedrom
 { signal: [
-  { name: 'DE',     wave: '0.1...........0..' },
-  { name: 'TXD',    wave: '1.0=.=.=.=.=.=.=1.', data: ['Start', 'b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7'] },
-  { name: 'Bus +',  wave: 'z.10=.=.=.=.=.=.=z.' },
-  { name: 'Bus -',  wave: 'z.01=.=.=.=.=.=.=z.' },
-  { name: 'State',  wave: 'x.=...........=.x', data: ['Receive/idle', 'Drive bus', 'Release bus'] }
-] }
+  { name: 'Fields', wave: '23456789234', data: ['Idle', 'Start', 'b0=1', 'b1=0', 'b2=1', 'b3=0', 'b4=1', 'b5=0', 'b6=1', 'b7=0', 'Stop'] },
+  { name: 'DE',     wave: '01111111110' },
+  { name: 'TXD',    wave: '10101010101' },
+  { name: 'Bus +',  wave: 'z010101010z' },
+  { name: 'Bus -',  wave: 'z101010101z' }
+], config: { hscale: 2 } }
 ```
 
 In a real half-duplex network, only one node should actively drive the bus at a time.
@@ -95,10 +106,9 @@ The example below is only a short bit sequence, not a complete valid frame.
 
 ```wavedrom
 { signal: [
-  { name: 'TXD',     wave: '1.0.1.0.0.1.1.0.1' },
-  { name: 'Meaning', wave: 'x.=.=.=.=.=.=.=.=x', data: ['Recessive', 'Dominant', 'Recessive', 'Dominant', 'Dominant', 'Recessive', 'Recessive', 'Dominant', 'Recessive'] },
-  { name: 'Rule',    wave: 'x................x', data: ['0 = dominant, 1 = recessive'] }
-] }
+  { name: 'Meaning', wave: '234556674', data: ['Rec', 'Dom', 'Rec', 'Dom', 'Dom', 'Rec', 'Rec', 'Dom', 'Rec'] },
+  { name: 'TXD',     wave: '101001101' }
+], config: { hscale: 2 } }
 ```
 
 When two nodes transmit at once, any dominant bit overwrites a recessive bit on the bus. That is the basis of CAN arbitration.
@@ -113,12 +123,14 @@ Common high-speed CAN behavior:
 
 ```wavedrom
 { signal: [
-  { name: 'Bus state', wave: '1.0.1.0.0.1.1.0.1', data: ['Rec', 'Dom', 'Rec', 'Dom', 'Dom', 'Rec', 'Rec', 'Dom', 'Rec'] },
-  { name: 'CANH',      wave: '2.3.2.3.3.2.2.3.2', data: ['~2.5V', '~3.5V', '~2.5V', '~3.5V', '~3.5V', '~2.5V', '~2.5V', '~3.5V', '~2.5V'] },
-  { name: 'CANL',      wave: '2.1.2.1.1.2.2.1.2', data: ['~2.5V', '~1.5V', '~2.5V', '~1.5V', '~1.5V', '~2.5V', '~2.5V', '~1.5V', '~2.5V'] },
-  { name: 'Diff',      wave: '0.1.0.1.1.0.0.1.0', data: ['~0V', '~2V', '~0V', '~2V', '~2V', '~0V', '~0V', '~2V', '~0V'] }
-] }
+  { name: 'Bus state', wave: '234556674', data: ['Rec', 'Dom', 'Rec', 'Dom', 'Dom', 'Rec', 'Rec', 'Dom', 'Rec'] },
+  { name: 'CANH',      wave: '010110010' },
+  { name: 'CANL',      wave: '000001000' },
+  { name: 'Diff',      wave: '010110010' }
+], config: { hscale: 2 } }
 ```
+
+These three rows are symbolic levels, not literal analog plots. For high-speed CAN, recessive is approximately `CANH ~= 2.5 V`, `CANL ~= 2.5 V`, while dominant is approximately `CANH ~= 3.5 V`, `CANL ~= 1.5 V`.
 
 ## Summary
 

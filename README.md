@@ -1,5 +1,5 @@
 # FalCAN gs_usb firmware
-This is a fork of candleLight_fw with support for RS-485 and RS-422 with the TouCAN Probe board <https://github.com/AndersBNielsen/FalCAN>
+This is a fork of candleLight_fw with support for RS-485 and RS-422 with the FalCAN Probe board <https://github.com/AndersBNielsen/FalCAN>
 
 See HW repo for instructions on how to switch between CAN and RS-485-mode. 
 
@@ -90,27 +90,47 @@ Also install build/flash tools:
 brew install cmake dfu-util
 ```
 
+#### Recommended clean build on macOS
+
+The cleanest known-good path on macOS is to use the Arm installer toolchain and pass its bin directory explicitly during configure:
+
+```sh
+rm -rf build-falcan-armgnu-fresh
+
+cmake -S . -B build-falcan-armgnu-fresh \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gnu-toolchain-15.2rel1.cmake \
+  -DARM_GNU_TOOLCHAIN_BIN_DIR=/Applications/ArmGNUToolchain/15.2.rel1/arm-none-eabi/bin
+
+cmake --build build-falcan-armgnu-fresh --target falcan_fw -- -j8
+```
+
+This produces:
+- `build-falcan-armgnu-fresh/falcan_fw`
+- `build-falcan-armgnu-fresh/falcan_fw.bin`
+- `build-falcan-armgnu-fresh/falcan_fw.dfu`
+
 #### Fresh build (clean build directory)
 
 From the repo root:
 
 ```sh
-rm -rf build-toucan-armgnu-fresh
+rm -rf build-falcan-armgnu-fresh
 
-cmake -S . -B build-toucan-armgnu-fresh \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gnu-toolchain-15.2rel1.cmake
+cmake -S . -B build-falcan-armgnu-fresh \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gnu-toolchain-15.2rel1.cmake \
+  -DARM_GNU_TOOLCHAIN_BIN_DIR=/Applications/ArmGNUToolchain/15.2.rel1/arm-none-eabi/bin
 
 # Build one target
-cmake --build build-toucan-armgnu-fresh --target toucan_fw -- -j8
+cmake --build build-falcan-armgnu-fresh --target falcan_fw -- -j8
 
 # Or build everything
-# cmake --build build-toucan-armgnu-fresh -- -j8
+# cmake --build build-falcan-armgnu-fresh -- -j8
 ```
 
 If your Arm toolchain is not under `/Applications/ArmGNUToolchain/...`, pass the bin dir explicitly:
 
 ```sh
-cmake -S . -B build-toucan-armgnu-fresh \
+cmake -S . -B build-falcan-armgnu-fresh \
   -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gnu-toolchain-15.2rel1.cmake \
   -DARM_GNU_TOOLCHAIN_BIN_DIR=/path/to/arm-none-eabi/bin
 ```
@@ -119,6 +139,7 @@ Notes:
 
 - LTO is intentionally **opt-in** in this fork: add `-DENABLE_LTO=ON` at configure time if you want it.
 - The build produces both `.bin` and `.dfu` artifacts (in the build directory).
+- If a Homebrew-provided toolchain fails with `nano.specs` errors, use the Arm installer path shown above.
 
 ```shell
 sudo apt-get install gcc-arm-none-eabi
@@ -151,13 +172,13 @@ If the device is in STM32 ROM DFU mode (`0483:df11`):
 
 ```sh
 dfu-util -l
-dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D build-toucan-armgnu-fresh/toucan_fw.bin
+dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D build-falcan-armgnu-fresh/falcan_fw.bin
 ```
 
 Or use the generated flash target:
 
 ```sh
-cmake --build build-toucan-armgnu-fresh --target flash-toucan_fw
+cmake --build build-falcan-armgnu-fresh --target flash-falcan_fw
 ```
 
 ## Download Binaries

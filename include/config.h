@@ -170,11 +170,11 @@ THE SOFTWARE.
 	#define LEDRX_Mode				 GPIO_MODE_OUTPUT_OD
 	#define LEDRX_Active_High		 0
 
-#elif defined(BOARD_toucan)
-	#define USBD_PRODUCT_STRING_FS	 "TouCAN Probe gs_usb"
-	#define USBD_PRODUCT_STRING_UART_FS "TouCAN Probe USB-to-UART"
-	#define USBD_MANUFACTURER_STRING "TouCAN Probe"
-	#define DFU_INTERFACE_STRING_FS	 "TouCAN Probe firmware upgrade interface"
+#elif defined(BOARD_falcan)
+	#define USBD_PRODUCT_STRING_FS	 "FalCAN Probe gs_usb"
+	#define USBD_PRODUCT_STRING_UART_FS "FalCAN Probe USB-to-UART"
+	#define USBD_MANUFACTURER_STRING "FalCAN Probe"
+	#define DFU_INTERFACE_STRING_FS	 "FalCAN Probe firmware upgrade interface"
 
 	#define TIM2_CLOCK_SPEED		 48000000
 
